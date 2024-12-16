@@ -70,7 +70,7 @@ class System_Grzn_Api
                             <h5 class="card-title">Consulta disponibilidad y compra tu boleto</h5>
                             <div class="mb-3">
                                 <div class="input-group">
-                                    <input type="number" class="form-control number-input" id="ticketNumber"
+                                    <input type="text" class="form-control number-input" id="ticketNumber"
                                         min="0" max="999" placeholder="Ingresa el número (000-999)">
                                     <button class="btn btn-primary" id="searchButton">Buscar</button>
                                 </div>

@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
     const $ticketNumber = $('#ticketNumber');
-    const $checkoutModal = $('#checkoutModal'); // Asegúrate de que el selector sea correcto
+    const $checkoutModal = $('#checkoutModal');
     const $searchButton = $('#searchButton');
     const $randomButton = $('#randomButton');
     const $clearButton = $('#clearButton');
@@ -29,15 +29,33 @@ jQuery(document).ready(function($) {
         const quantity = parseInt($randomQuantity.val());
 
         if (quantity >= 1 && quantity <= 999) {
-            selectedTickets = [];
-            for (let i = 0; i < quantity; i++) {
-                const randomNumber = Math.floor(Math.random() * 1000);
-                selectedTickets.push(randomNumber);
-            }
-            updateSelectedTickets();
-            $randomModal.modal('hide');
+            // Llamada a la API para obtener boletos aleatorios
+            $.ajax({
+                url: 'https://system_grandesrifasdelazonanorte.test/api/tickets/azar', // URL de la API actualizada
+                method: 'GET',
+                data: { cantidad: quantity },
+                success: function(response) {
+                    if (response.boletos) {
+                        selectedTickets = response.boletos; // La API devuelve un array de boletos
+                        updateSelectedTickets();
+                        $randomModal.modal('hide');
+                    } else {
+                        alert('Error: No se pudieron obtener boletos aleatorios.');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
+                    } else if (xhr.status === 401) {
+                        alert('No autorizado. Por favor, inicia sesión.');
+                    } else {
+                        const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
+                        alert('Error: ' + errorMessage);
+                    }
+                }
+            });
         } else {
-            alert('Por favor, seleccione entre 000 y 999 números');
+            alert('Por favor, seleccione entre 1 y 999 números');
         }
     });
 
@@ -46,12 +64,39 @@ jQuery(document).ready(function($) {
         const number = parseInt($ticketNumber.val());
 
         if (validateTicketNumber(number)) {
-            if (!selectedTickets.includes(number)) {
-                selectedTickets.push(number);
-                updateSelectedTickets();
-            } else {
-                alert('Este boleto ya ha sido seleccionado');
-            }
+            // Llamada a la API para verificar si el boleto está disponible
+            $.ajax({
+                url: 'https://system_grandesrifasdelazonanorte.test/api/tickets/buscar', // URL de la API actualizada
+                method: 'POST',
+                Accept: '*/*',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: JSON.stringify({ numero: number }),
+                success: function(response) {
+                    if (response.disponible) {
+                        if (!selectedTickets.includes(number)) {
+                            selectedTickets.push(number);
+                            updateSelectedTickets();
+                        } else {
+                            alert('Este boleto ya ha sido seleccionado');
+                        }
+                    } else {
+                        alert('El boleto no está disponible: ' + response.mensaje);
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
+                    } else if (xhr.status === 401) {
+                        alert('No autorizado. Por favor, inicia sesión.');
+                    } else {
+                        const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
+                        alert('Error: ' + errorMessage);
+                    }
+                }
+            });
         } else {
             alert('Por favor, ingrese un número entre 000 y 999');
         }
@@ -99,20 +144,26 @@ jQuery(document).ready(function($) {
         if ($checkoutForm[0].checkValidity()) {
             const formData = $checkoutForm.serializeArray();
 
-            // Agregar los boletos seleccionados a los datos del formulario
-            formData.push({
-                name: 'selectedTickets',
-                value: $selectedTicketsInput.val()
-            });
+            // Preparar datos para la API
+            const purchaseData = {
+                nombre_apellido: formData.find(field => field.name === 'nombre_apellido').value,
+                ci: formData.find(field => field.name === 'ci').value,
+                telefono: formData.find(field => field.name === 'telefono').value,
+                direccion: formData.find(field => field.name === 'direccion').value,
+                total_a_pagar: selectedTickets.length * TICKET_PRICE,
+                selectedTickets: JSON.parse($selectedTicketsInput.val())
+            };
 
-            // Llamada AJAX para procesar la compra
+            // Llamada AJAX a la API Laravel
             $.ajax({
-                url: ticketFormData.ajax_url,
+                url: 'https://system_grandesrifasdelazonanorte.test/api/tickets/comprar', // URL de la API actualizada
                 method: 'POST',
-                data: {
-                    action: 'process_ticket_purchase',
-                    formData: formData
+                Accept: '*/*',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
+                data: JSON.stringify(purchaseData),
                 success: function(response) {
                     if (response.success) {
                         alert('Compra procesada exitosamente');
@@ -126,8 +177,15 @@ jQuery(document).ready(function($) {
                         alert('Error: ' + response.message);
                     }
                 },
-                error: function() {
-                    alert('Hubo un error al procesar la compra');
+                eerror: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
+                    } else if (xhr.status === 401) {
+                        alert('No autorizado. Por favor, inicia sesión.');
+                    } else {
+                        const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
+                        alert('Error: ' + errorMessage);
+                    }
                 }
             });
         } else {
