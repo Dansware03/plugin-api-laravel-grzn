@@ -40,22 +40,42 @@ jQuery(document).ready(function($) {
                         updateSelectedTickets();
                         $randomModal.modal('hide');
                     } else {
-                        alert('Error: No se pudieron obtener boletos aleatorios.');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Error al generar boletos',
+                            text: 'No se pudieron obtener boletos aleatorios.'
+                        });
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 403) {
-                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Acceso denegado.',
+                            text: 'Verifica tus permisos o configuración de CORS.'
+                        });
                     } else if (xhr.status === 401) {
-                        alert('No autorizado. Por favor, inicia sesión.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No autorizado.',
+                            text: 'Por favor, inicia sesión.'
+                        });
                     } else {
                         const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
-                        alert('Error: ' + errorMessage);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Hubo un error desconocido',
+                            text: errorMessage
+                        });
                     }
                 }
             });
         } else {
-            alert('Por favor, seleccione entre 1 y 999 números');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Por favor',
+                text: 'seleccione entre 1 y 999 números'
+            });
         }
     });
 
@@ -64,9 +84,8 @@ jQuery(document).ready(function($) {
         const number = parseInt($ticketNumber.val());
 
         if (validateTicketNumber(number)) {
-            // Llamada a la API para verificar si el boleto está disponible
             $.ajax({
-                url: 'https://system_grandesrifasdelazonanorte.test/api/tickets/buscar', // URL de la API actualizada
+                url: 'https://system_grandesrifasdelazonanorte.test/api/tickets/buscar',
                 method: 'POST',
                 Accept: '*/*',
                 contentType: 'application/json',
@@ -76,29 +95,40 @@ jQuery(document).ready(function($) {
                 data: JSON.stringify({ numero: number }),
                 success: function(response) {
                     if (response.disponible) {
-                        if (!selectedTickets.includes(number)) {
-                            selectedTickets.push(number);
-                            updateSelectedTickets();
-                        } else {
-                            alert('Este boleto ya ha sido seleccionado');
-                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Disponible!',
+                            text: `El boleto ${number.toString().padStart(3, '0')} está disponible.`,
+                            confirmButtonText: 'Agregar a selección'
+                        }).then(() => {
+                            if (!selectedTickets.includes(number)) {
+                                selectedTickets.push(number);
+                                updateSelectedTickets();
+                            }
+                        });
                     } else {
-                        alert('El boleto no está disponible: ' + response.mensaje);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No disponible',
+                            text: response.mensaje
+                        });
                     }
                 },
                 error: function(xhr) {
-                    if (xhr.status === 403) {
-                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
-                    } else if (xhr.status === 401) {
-                        alert('No autorizado. Por favor, inicia sesión.');
-                    } else {
-                        const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
-                        alert('Error: ' + errorMessage);
-                    }
+                    const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMessage
+                    });
                 }
             });
         } else {
-            alert('Por favor, ingrese un número entre 000 y 999');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Número inválido',
+                text: 'Por favor, ingrese un número entre 000 y 999'
+            });
         }
     });
 
@@ -135,7 +165,11 @@ jQuery(document).ready(function($) {
             // Mostrar modal
             $checkoutModal.modal('show');
         } else {
-            alert('Por favor, seleccione al menos un boleto');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Por favor',
+                text: 'seleccione al menos un boleto'
+            });
         }
     });
 
@@ -166,7 +200,6 @@ jQuery(document).ready(function($) {
                 data: JSON.stringify(purchaseData),
                 success: function(response) {
                     if (response.success) {
-                        alert('Compra procesada exitosamente');
                         selectedTickets = [];
                         updateSelectedTickets();
                         $checkoutModal.modal('hide');
@@ -174,17 +207,33 @@ jQuery(document).ready(function($) {
                         // Mostrar modal de éxito
                         $('#successModal').modal('show');
                     } else {
-                        alert('Error: ' + response.message);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Error',
+                            text: response.message
+                        });
                     }
                 },
                 eerror: function(xhr) {
                     if (xhr.status === 403) {
-                        alert('Acceso denegado. Verifica tus permisos o configuración de CORS.');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Acceso denegado.',
+                            text: 'Verifica tus permisos o configuración de CORS.'
+                        });
                     } else if (xhr.status === 401) {
-                        alert('No autorizado. Por favor, inicia sesión.');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'No autorizado.',
+                            text: 'Por favor, inicia sesión.'
+                        });
                     } else {
                         const errorMessage = xhr.responseJSON?.message || 'Hubo un error desconocido';
-                        alert('Error: ' + errorMessage);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Error',
+                            text: errorMessage
+                        });
                     }
                 }
             });

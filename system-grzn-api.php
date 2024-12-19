@@ -40,6 +40,9 @@ class System_Grzn_Api
 
     public function enqueue_scripts()
     {
+        // Encolar SweetAlert2
+        wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), '11.0.0', true);
+
         // Encolar estilos de Bootstrap (opcional)
         wp_enqueue_style('bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css');
 
@@ -49,10 +52,10 @@ class System_Grzn_Api
         // Encolar Font Awesome para iconos
         wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
 
-        // Encolar script personalizado
-        wp_enqueue_script('ticket-form-script', plugin_dir_url(__FILE__) . 'js/ticket-form.js', array('jquery'), '1.0.0', true);
+        // Scripts personalizados
+        wp_enqueue_script('ticket-form-script', plugin_dir_url(__FILE__) . 'js/ticket-form.js', array('jquery', 'sweetalert2'), '1.0.0', true);
 
-        // Pasar datos al script si es necesario
+        // Pasar datos al script
         wp_localize_script('ticket-form-script', 'ticketFormData', array(
             'ajax_url' => admin_url('admin-ajax.php')
         ));
@@ -64,7 +67,7 @@ class System_Grzn_Api
 ?>
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Consulta disponibilidad y compra tu boleto</h5>
@@ -150,7 +153,7 @@ class System_Grzn_Api
                             </div>
                             <div class="mb-3">
                                 <label for="ticketPrice" class="form-label">Valor de cada boleto:</label>
-                                <input type="text" class="form-control" id="ticketPrice" value="85" disabled>
+                                <input type="text" class="form-control" id="ticketPrice" value="$85" disabled>
                             </div>
                             <div class="mb-3">
                                 <label for="totalToPay" class="form-label">Total a pagar:</label>
