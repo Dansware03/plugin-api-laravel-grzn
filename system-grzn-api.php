@@ -36,6 +36,7 @@ class System_Grzn_Api
     {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_shortcode('ticket_form', array($this, 'render_ticket_form'));
+        add_shortcode('lista_ticket', array($this, 'render_lista_ticket'));
     }
 
     public function enqueue_scripts()
@@ -59,6 +60,51 @@ class System_Grzn_Api
         wp_localize_script('ticket-form-script', 'ticketFormData', array(
             'ajax_url' => admin_url('admin-ajax.php')
         ));
+        wp_enqueue_style('custom-styles', plugin_dir_url(__FILE__) . 'css/custom-styles.css');
+
+        // Agregar estilos inline para el grid de tickets
+        wp_add_inline_style('custom-styles', '
+            .tickets-container {
+                max-height: 400px;
+                overflow-y: auto;
+                border: 1px solid #dee2e6;
+                padding: 15px;
+                border-radius: 8px;
+            }
+            .ticket-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+                gap: 5px;
+            }
+            .ticket-item {
+                font-size: 12px;
+                padding: 4px;
+                border-radius: 4px;
+                text-align: center;
+                font-weight: bold;
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+            }
+            .ticket-item.sold {
+                background: #1e1e1e;
+                color: black;
+                border-color: #1e1e1e;
+            }
+            /* Personalización del scrollbar */
+            .tickets-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            .tickets-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            .tickets-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+            .tickets-container::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+        ');
     }
 
     public function render_ticket_form()
@@ -193,7 +239,45 @@ class System_Grzn_Api
                 </div>
             </div>
         </div>
-<?php
+    <?php
+        return ob_get_clean();
+    }
+
+    public function render_lista_ticket() {
+        ob_start();
+        ?>
+        <div class="container my-4">
+            <h5 class="text-center mb-3">Lista de Boletos</h5>
+            <div class="tickets-container">
+                <div class="ticket-grid" id="ticketGrid">
+                    <div class="text-center w-100">Cargando boletos...</div>
+                </div>
+            </div>
+        </div>
+        <script>
+            jQuery(document).ready(function($) {
+                const apiUrl = 'https://system_grandesrifasdelazonanorte.test/api/tickets/listar';
+
+                $.getJSON(apiUrl, function(response) {
+                    const boletos = response.boletos;
+                    const ticketGrid = $('#ticketGrid');
+                    ticketGrid.empty();
+
+                    boletos.forEach(function(boleto) {
+                        const ticketClass = boleto.vendido ? 'ticket-item sold' : 'ticket-item';
+                        const ticket = `
+                            <div class="${ticketClass}">
+                                ${boleto.numero}
+                            </div>
+                        `;
+                        ticketGrid.append(ticket);
+                    });
+                }).fail(function() {
+                    $('#ticketGrid').html('<div class="text-danger">Error al cargar los boletos. Intenta nuevamente.</div>');
+                });
+            });
+        </script>
+        <?php
         return ob_get_clean();
     }
 }
